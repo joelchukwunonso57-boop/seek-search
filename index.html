@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEEK - Search Beyond Limits</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 30px 16px;
+  background: #f5f8ff;
+  color: #17233c;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+.logo {
+  color: #1769e0;
+  font-size: 48px;
+  font-weight: bold;
+  margin-top: 55px;
+}
+.tagline { color: #58677e; margin: 10px 0 30px; }
+.search {
+  max-width: 600px;
+  margin: auto;
+  display: flex;
+  gap: 8px;
+}
+input {
+  min-width: 0;
+  flex: 1;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 30px;
+  font-size: 16px;
+}
+button {
+  border: 0;
+  border-radius: 25px;
+  padding: 13px 18px;
+  background: #1769e0;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+.categories { margin: 22px 0; }
+.categories button {
+  margin: 4px;
+  background: #e2ebfa;
+  color: #1769e0;
+}
+.categories button.active { background: #1769e0; color: white; }
+h3 { margin-top: 35px; }
+.history {
+  max-width: 600px;
+  margin: 15px auto;
+  text-align: left;
+}
+.history-item {
+  padding: 12px;
+  margin: 7px 0;
+  background: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.clear {
+  background: #64748b;
+  margin-top: 10px;
+}
+footer { margin-top: 60px; color: #8290a5; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="logo">SEEK</div>
+<p class="tagline">Search beyond limits.</p>
+
+<form class="search" id="searchForm">
+  <input id="searchInput" type="search"
+  placeholder="What are you looking for?" required>
+  <button type="submit">Search</button>
+</form>
+
+<div class="categories">
+  <button class="active" data-type="web">Web</button>
+  <button data-type="images">Images</button>
+  <button data-type="news">News</button>
+  <button data-type="videos">Videos</button>
+</div>
+
+<div class="history">
+  <h3>Recent searches</h3>
+  <div id="historyList">No recent searches yet.</div>
+  <button class="clear" id="clearHistory">Clear history</button>
+</div>
+
+<footer>SEEK © 2026 — Search beyond limits.</footer>
+
+<script>
+let selectedType = "web";
+
+document.querySelectorAll(".categories button").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".categories button")
+      .forEach(item => item.classList.remove("active"));
+    button.classList.add("active");
+    selectedType = button.dataset.type;
+  });
+});
+
+function getHistory() {
+  return JSON.parse(localStorage.getItem("seekHistory") || "[]");
+}
+
+function showHistory() {
+  const list = document.getElementById("historyList");
+  const history = getHistory();
+  list.innerHTML = "";
+
+  if (history.length === 0) {
+    list.textContent = "No recent searches yet.";
+    return;
+  }
+
+  history.forEach(term => {
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.textContent = "🔎 " + term;
+    item.addEventListener("click", () => {
+      document.getElementById("searchInput").value = term;
+      search(term);
+    });
+    list.appendChild(item);
+  });
+}
+
+function search(term) {
+  let history = getHistory();
+  history = [term, ...history.filter(item => item !== term)].slice(0, 10);
+  localStorage.setItem("seekHistory", JSON.stringify(history));
+
+  let url = "https://www.google.com/search?q=" + encodeURIComponent(term);
+
+  if (selectedType === "images") url += "&tbm=isch";
+  if (selectedType === "news") url += "&tbm=nws";
+  if (selectedType === "videos") url += "&tbm=vid";
+
+  showHistory();
+  window.open(url, "_blank");
+}
+
+document.getElementById("searchForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const term = document.getElementById("searchInput").value.trim();
+  if (term) search(term);
+});
+
+document.getElementById("clearHistory").addEventListener("click", () => {
+  localStorage.removeItem("seekHistory");
+  showHistory();
+});
+
+showHistory();
+</script>
+
+</body>
+</html>
