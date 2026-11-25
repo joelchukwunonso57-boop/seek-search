@@ -5,8 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEEK - Search Beyond Limits</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 30px 16px;
@@ -15,19 +19,26 @@ body {
   font-family: Arial, sans-serif;
   text-align: center;
 }
+
 .logo {
   color: #1769e0;
   font-size: 48px;
   font-weight: bold;
   margin-top: 55px;
 }
-.tagline { color: #58677e; margin: 10px 0 30px; }
+
+.tagline {
+  color: #58677e;
+  margin-bottom: 30px;
+}
+
 .search {
   max-width: 600px;
   margin: auto;
   display: flex;
   gap: 8px;
 }
+
 input {
   min-width: 0;
   flex: 1;
@@ -36,6 +47,7 @@ input {
   border-radius: 30px;
   font-size: 16px;
 }
+
 button {
   border: 0;
   border-radius: 25px;
@@ -45,124 +57,169 @@ button {
   font-size: 15px;
   cursor: pointer;
 }
-.categories { margin: 22px 0; }
+
+#results {
+  max-width: 650px;
+  margin: 30px auto;
+  text-align: left;
+}
+
+.result {
+  background: white;
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.result a {
+  color: #1769e0;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.result p {
+  color: #58677e;
+  line-height: 1.5;
+}
+
+.categories {
+  margin: 22px 0;
+}
+
 .categories button {
   margin: 4px;
   background: #e2ebfa;
   color: #1769e0;
 }
-.categories button.active { background: #1769e0; color: white; }
-h3 { margin-top: 35px; }
-.history {
-  max-width: 600px;
-  margin: 15px auto;
-  text-align: left;
+
+#status {
+  color: #58677e;
+  margin-top: 20px;
 }
-.history-item {
-  padding: 12px;
-  margin: 7px 0;
-  background: white;
-  border-radius: 10px;
-  cursor: pointer;
+
+footer {
+  margin-top: 60px;
+  color: #8290a5;
+  font-size: 13px;
 }
-.clear {
-  background: #64748b;
-  margin-top: 10px;
-}
-footer { margin-top: 60px; color: #8290a5; font-size: 13px; }
 </style>
 </head>
+
 <body>
 
 <div class="logo">SEEK</div>
 <p class="tagline">Search beyond limits.</p>
 
 <form class="search" id="searchForm">
-  <input id="searchInput" type="search"
-  placeholder="What are you looking for?" required>
+  <input id="searchInput"
+    type="search"
+    placeholder="Search SEEK..."
+    required>
   <button type="submit">Search</button>
 </form>
 
 <div class="categories">
-  <button class="active" data-type="web">Web</button>
-  <button data-type="images">Images</button>
-  <button data-type="news">News</button>
-  <button data-type="videos">Videos</button>
+  <button type="button">Web</button>
+  <button type="button" onclick="showMessage()">Images</button>
+  <button type="button" onclick="showMessage()">News</button>
+  <button type="button" onclick="showMessage()">Videos</button>
 </div>
 
-<div class="history">
-  <h3>Recent searches</h3>
-  <div id="historyList">No recent searches yet.</div>
-  <button class="clear" id="clearHistory">Clear history</button>
-</div>
+<p id="status">Loading SEEK search index...</p>
+<div id="results"></div>
 
 <footer>SEEK © 2026 — Search beyond limits.</footer>
 
 <script>
-let selectedType = "web";
+let seekIndex = [];
 
-document.querySelectorAll(".categories button").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".categories button")
-      .forEach(item => item.classList.remove("active"));
-    button.classList.add("active");
-    selectedType = button.dataset.type;
-  });
-});
+async function loadIndex() {
+  const status = document.getElementById("status");
 
-function getHistory() {
-  return JSON.parse(localStorage.getItem("seekHistory") || "[]");
+  try {
+    const response = await fetch("./seek_index.json");
+
+    if (!response.ok) {
+      throw new Error("Index file not found");
+    }
+
+    seekIndex = await response.json();
+    status.textContent =
+      "SEEK is ready! " + seekIndex.length +
+      " webpages loaded.";
+
+  } catch (error) {
+    status.textContent =
+      "SEEK could not load its search index. Please check the index file.";
+  }
 }
 
-function showHistory() {
-  const list = document.getElementById("historyList");
-  const history = getHistory();
-  list.innerHTML = "";
+function searchSeek(query) {
+  const results = document.getElementById("results");
+  const status = document.getElementById("status");
 
-  if (history.length === 0) {
-    list.textContent = "No recent searches yet.";
+  results.innerHTML = "";
+
+  const words = query.toLowerCase().split(/\s+/);
+
+  const matches = seekIndex.map(page => {
+    const text = (page.title + " " + page.content).toLowerCase();
+
+    let score = 0;
+    words.forEach(word => {
+      if (word && text.includes(word)) score++;
+    });
+
+    return { page, score };
+  }).filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (matches.length === 0) {
+    status.textContent = "No results found in SEEK's five saved webpages.";
     return;
   }
 
-  history.forEach(term => {
-    const item = document.createElement("div");
-    item.className = "history-item";
-    item.textContent = "🔎 " + term;
-    item.addEventListener("click", () => {
-      document.getElementById("searchInput").value = term;
-      search(term);
-    });
-    list.appendChild(item);
+  status.textContent = matches.length + " results found in SEEK.";
+
+  matches.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "result";
+
+    const link = document.createElement("a");
+    link.href = item.page.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = item.page.title;
+
+    const description = document.createElement("p");
+    description.textContent =
+      item.page.content.substring(0, 350) + "...";
+
+    card.appendChild(link);
+    card.appendChild(description);
+    results.appendChild(card);
   });
 }
 
-function search(term) {
-  let history = getHistory();
-  history = [term, ...history.filter(item => item !== term)].slice(0, 10);
-  localStorage.setItem("seekHistory", JSON.stringify(history));
+document.getElementById("searchForm")
+  .addEventListener("submit", function(event) {
+    event.preventDefault();
 
-  let url = "https://www.google.com/search?q=" + encodeURIComponent(term);
+    const query = document.getElementById("searchInput")
+      .value.trim();
 
-  if (selectedType === "images") url += "&tbm=isch";
-  if (selectedType === "news") url += "&tbm=nws";
-  if (selectedType === "videos") url += "&tbm=vid";
+    if (query && seekIndex.length > 0) {
+      searchSeek(query);
+    }
+  });
 
-  showHistory();
-  window.open(url, "_blank");
+function showMessage() {
+  document.getElementById("status").textContent =
+    "This feature is still being developed.";
 }
 
-document.getElementById("searchForm").addEventListener("submit", event => {
-  event.preventDefault();
-  const term = document.getElementById("searchInput").value.trim();
-  if (term) search(term);
-});
-
-document.getElementById("clearHistory").addEventListener("click", () => {
-  localStorage.removeItem("seekHistory");
-  showHistory();
-});
-
-showHistory();
+loadIndex();
 </script>
 
 </body>
