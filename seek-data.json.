@@ -1,0 +1,28 @@
+
+[
+  {
+    "title": "Internet Assigned Numbers Authority",
+    "url": "https://www.iana.org",
+    "content": "IANA coordinates important internet resources, including domain names, IP addresses and internet protocol numbers."
+  },
+  {
+    "title": "About us",
+    "url": "https://www.iana.org/about",
+    "content": "Learn about IANA and its technical responsibilities for coordinating internet resources."
+  },
+  {
+    "title": "Domain Name Services",
+    "url": "https://www.iana.org/domains",
+    "content": "IANA manages important aspects of the internet domain name system."
+  },
+  {
+    "title": "Root Zone Management",
+    "url": "https://www.iana.org/domains/root",
+    "content": "IANA coordinates information and changes relating to the DNS root zone."
+  },
+  {
+    "title": "Top-Level Domains",
+    "url": "https://www.iana.org/domains/root/db",
+    "content": "This database contains information about top-level domains used on the internet."
+  }
+]
