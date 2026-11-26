@@ -5,131 +5,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEEK - Search Beyond Limits</title>
-
 <style>
-* {
-  box-sizing: border-box;
-}
-
+* { box-sizing: border-box; }
 body {
   margin: 0;
   padding: 30px 16px;
-  background: #f5f8ff;
-  color: #17233c;
   font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+.container {
+  max-width: 700px;
+  margin: 50px auto;
   text-align: center;
 }
-
-.logo {
-  color: #1769e0;
-  font-size: 48px;
-  font-weight: bold;
-  margin-top: 55px;
-}
-
-.tagline {
-  color: #58677e;
-  margin-bottom: 30px;
-}
-
-.search {
-  max-width: 600px;
-  margin: auto;
-  display: flex;
-  gap: 8px;
-}
-
+h1 { font-size: 42px; margin-bottom: 8px; }
+p { color: #596579; }
 input {
-  min-width: 0;
-  flex: 1;
+  width: 100%;
   padding: 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 30px;
+  border: 1px solid #ccd3df;
+  border-radius: 10px;
+  font-size: 16px;
+  margin: 20px 0 10px;
+}
+button {
+  padding: 14px 25px;
+  border: 0;
+  border-radius: 9px;
+  background: #1746c7;
+  color: white;
   font-size: 16px;
 }
-
-button {
-  border: 0;
-  border-radius: 25px;
-  padding: 13px 18px;
-  background: #1769e0;
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-#results {
-  max-width: 650px;
-  margin: 30px auto;
-  text-align: left;
-}
-
+#status { margin: 18px 0; }
 .result {
   background: white;
   padding: 16px;
   margin: 12px 0;
-  border-radius: 12px;
-  overflow-wrap: anywhere;
+  border-radius: 10px;
+  text-align: left;
 }
-
-.result a {
-  color: #1769e0;
-  font-weight: bold;
-  text-decoration: none;
-}
-
-.result p {
-  color: #58677e;
-  line-height: 1.5;
-}
-
-.categories {
-  margin: 22px 0;
-}
-
-.categories button {
-  margin: 4px;
-  background: #e2ebfa;
-  color: #1769e0;
-}
-
-#status {
-  color: #58677e;
-  margin-top: 20px;
-}
-
-footer {
-  margin-top: 60px;
-  color: #8290a5;
-  font-size: 13px;
-}
+.result a { color: #1746c7; font-weight: bold; }
 </style>
 </head>
-
 <body>
+<div class="container">
+  <h1>SEEK</h1>
+  <p>Search Beyond Limits</p>
 
-<div class="logo">SEEK</div>
-<p class="tagline">Search beyond limits.</p>
+  <input id="searchBox" type="text" placeholder="What do you want to search for?">
+  <button onclick="searchSEEK()">Search</button>
 
-<form class="search" id="searchForm">
-  <input id="searchInput"
-    type="search"
-    placeholder="Search SEEK..."
-    required>
-  <button type="submit">Search</button>
-</form>
-
-<div class="categories">
-  <button type="button">Web</button>
-  <button type="button" onclick="showMessage()">Images</button>
-  <button type="button" onclick="showMessage()">News</button>
-  <button type="button" onclick="showMessage()">Videos</button>
+  <p id="status">Loading SEEK search index...</p>
+  <div id="results"></div>
 </div>
-
-<p id="status">Loading SEEK search index...</p>
-<div id="results"></div>
-
-<footer>SEEK © 2026 — Search beyond limits.</footer>
 
 <script>
 let seekIndex = [];
@@ -138,89 +67,65 @@ async function loadIndex() {
   const status = document.getElementById("status");
 
   try {
-    const response = await fetch("./seek_index.json");
+    const response = await fetch("./seek-data.json");
 
     if (!response.ok) {
       throw new Error("Index file not found");
     }
 
     seekIndex = await response.json();
+
     status.textContent =
       "SEEK is ready! " + seekIndex.length +
       " webpages loaded.";
-
   } catch (error) {
     status.textContent =
       "SEEK could not load its search index. Please check the index file.";
   }
 }
 
-function searchSeek(query) {
-  const results = document.getElementById("results");
-  const status = document.getElementById("status");
+function searchSEEK() {
+  const query = document.getElementById("searchBox")
+    .value.trim().toLowerCase();
 
+  const results = document.getElementById("results");
   results.innerHTML = "";
 
-  const words = query.toLowerCase().split(/\s+/);
-
-  const matches = seekIndex.map(page => {
-    const text = (page.title + " " + page.content).toLowerCase();
-
-    let score = 0;
-    words.forEach(word => {
-      if (word && text.includes(word)) score++;
-    });
-
-    return { page, score };
-  }).filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  if (matches.length === 0) {
-    status.textContent = "No results found in SEEK's five saved webpages.";
+  if (!query) {
+    results.textContent = "Please enter something to search.";
     return;
   }
 
-  status.textContent = matches.length + " results found in SEEK.";
+  const matches = seekIndex.filter(page =>
+    (page.title + " " + page.content)
+      .toLowerCase().includes(query)
+  );
 
-  matches.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "result";
+  if (matches.length === 0) {
+    results.textContent = "No results found.";
+    return;
+  }
+
+  matches.forEach(page => {
+    const item = document.createElement("div");
+    item.className = "result";
 
     const link = document.createElement("a");
-    link.href = item.page.url;
+    link.href = page.url;
     link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = item.page.title;
+    link.rel = "noopener";
+    link.textContent = page.title;
 
     const description = document.createElement("p");
-    description.textContent =
-      item.page.content.substring(0, 350) + "...";
+    description.textContent = page.content;
 
-    card.appendChild(link);
-    card.appendChild(description);
-    results.appendChild(card);
+    item.appendChild(link);
+    item.appendChild(description);
+    results.appendChild(item);
   });
-}
-
-document.getElementById("searchForm")
-  .addEventListener("submit", function(event) {
-    event.preventDefault();
-
-    const query = document.getElementById("searchInput")
-      .value.trim();
-
-    if (query && seekIndex.length > 0) {
-      searchSeek(query);
-    }
-  });
-
-function showMessage() {
-  document.getElementById("status").textContent =
-    "This feature is still being developed.";
 }
 
 loadIndex();
 </script>
-
 </body>
 </html>
