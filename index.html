@@ -66,8 +66,7 @@ let seekIndex = [];
 async function loadIndex() {
   const status = document.getElementById("status");
 
-  try {
-    const response = await fetch("./seek_index.json");
+  const response = await fetch("./seek-data.json");
     if (!response.ok) {
       throw new Error("Index file not found");
     }
