@@ -5,8 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEEK - Search Beyond Limits</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 30px 16px;
@@ -14,13 +18,22 @@ body {
   background: #f5f7fb;
   color: #172033;
 }
+
 .container {
   max-width: 700px;
   margin: 50px auto;
   text-align: center;
 }
-h1 { font-size: 42px; margin-bottom: 8px; }
-p { color: #596579; }
+
+h1 {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+p {
+  color: #596579;
+}
+
 input {
   width: 100%;
   padding: 16px;
@@ -29,6 +42,7 @@ input {
   font-size: 16px;
   margin: 20px 0 10px;
 }
+
 button {
   padding: 14px 25px;
   border: 0;
@@ -36,8 +50,13 @@ button {
   background: #1746c7;
   color: white;
   font-size: 16px;
+  cursor: pointer;
 }
-#status { margin: 18px 0; }
+
+#status {
+  margin: 18px 0;
+}
+
 .result {
   background: white;
   padding: 16px;
@@ -45,19 +64,32 @@ button {
   border-radius: 10px;
   text-align: left;
 }
-.result a { color: #1746c7; font-weight: bold; }
+
+.result a {
+  color: #1746c7;
+  font-weight: bold;
+}
 </style>
 </head>
+
 <body>
 <div class="container">
+
   <h1>SEEK</h1>
   <p>Search Beyond Limits</p>
 
-  <input id="searchBox" type="text" placeholder="What do you want to search for?">
+  <input
+    id="searchBox"
+    type="text"
+    placeholder="What do you want to search for?"
+  >
+
   <button onclick="searchSEEK()">Search</button>
 
   <p id="status">Loading SEEK search index...</p>
+
   <div id="results"></div>
+
 </div>
 
 <script>
@@ -66,22 +98,29 @@ let seekIndex = [];
 async function loadIndex() {
   const status = document.getElementById("status");
 
-  const response = await fetch("./seek-data.json");
+  try {
+    const response = await fetch("./seek-data.json");
+
     if (!response.ok) {
       throw new Error("Index file not found");
     }
 
     seekIndex = await response.json();
 
+    if (!Array.isArray(seekIndex)) {
+      throw new Error("Invalid search index");
+    }
+
     status.textContent =
       "SEEK is ready! " + seekIndex.length +
       " webpages loaded.";
+
   } catch (error) {
     status.textContent =
       "SEEK could not load its search index. Please check the index file.";
   }
 }
-  
+
 function searchSEEK() {
   const query = document.getElementById("searchBox")
     .value.trim().toLowerCase();
@@ -91,6 +130,11 @@ function searchSEEK() {
 
   if (!query) {
     results.textContent = "Please enter something to search.";
+    return;
+  }
+
+  if (seekIndex.length === 0) {
+    results.textContent = "SEEK search index is not ready yet.";
     return;
   }
 
@@ -110,7 +154,10 @@ function searchSEEK() {
       if (content.includes(word)) score += 1;
     });
 
-    return { page, score };
+    return {
+      page: page,
+      score: score
+    };
   })
   .filter(item => item.score > 0)
   .sort((a, b) => b.score - a.score);
@@ -130,18 +177,20 @@ function searchSEEK() {
     link.href = page.url;
     link.target = "_blank";
     link.rel = "noopener";
-    link.textContent = page.title;
+    link.textContent = page.title || "Untitled page";
 
     const description = document.createElement("p");
-    description.textContent = page.content;
+    description.textContent = page.content || "";
 
     result.appendChild(link);
     result.appendChild(description);
+
     results.appendChild(result);
   });
-    }
+}
 
 loadIndex();
 </script>
+
 </body>
 </html>
