@@ -83,8 +83,8 @@ async function loadIndex() {
       "SEEK could not load its search index. Please check the index file.";
   }
 }
-
-function searchSEEK() {
+  
+function search() {
   const query = document.getElementById("searchBox")
     .value.trim().toLowerCase();
 
@@ -96,19 +96,37 @@ function searchSEEK() {
     return;
   }
 
-  const matches = seekIndex.filter(page =>
-    (page.title + " " + page.content)
-      .toLowerCase().includes(query)
-  );
+  const words = query.split(/\s+/);
+
+  const matches = seekIndex.map(page => {
+    const title = (page.title || "").toLowerCase();
+    const content = (page.content || "").toLowerCase();
+
+    let score = 0;
+
+    if (title.includes(query)) score += 10;
+    if (content.includes(query)) score += 5;
+
+    words.forEach(word => {
+      if (title.includes(word)) score += 5;
+      if (content.includes(word)) score += 1;
+    });
+
+    return { page, score };
+  })
+  .filter(item => item.score > 0)
+  .sort((a, b) => b.score - a.score);
 
   if (matches.length === 0) {
     results.textContent = "No results found.";
     return;
   }
 
-  matches.forEach(page => {
-    const item = document.createElement("div");
-    item.className = "result";
+  matches.forEach(item => {
+    const page = item.page;
+
+    const result = document.createElement("div");
+    result.className = "result";
 
     const link = document.createElement("a");
     link.href = page.url;
@@ -119,11 +137,11 @@ function searchSEEK() {
     const description = document.createElement("p");
     description.textContent = page.content;
 
-    item.appendChild(link);
-    item.appendChild(description);
-    results.appendChild(item);
+    result.appendChild(link);
+    result.appendChild(description);
+    results.appendChild(result);
   });
-}
+    }
 
 loadIndex();
 </script>
